@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/background"
+    android:clipToPadding="true"
+    android:windowTranslucentStatus="true"
+    tools:context="com.joehaivo.hweather.View.MainActivity">
+
+    <ImageView
+        android:id="@+id/imageAnime"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_gravity="center_horizontal"
+        tools:layout_editor_absoluteX="76dp"
+        tools:layout_editor_absoluteY="16dp"
+
+        />
+
+    <TextView
+        android:id="@+id/cityText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="16dp"
+        android:layout_marginTop="32dp"
+        android:textColor="@android:color/background_light"
+        android:textSize="20sp" />
+
+    <ImageButton
+        android:id="@+id/btn_setting"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end"
+        android:layout_marginRight="16dp"
+        android:layout_marginTop="32dp"
+        android:background="@drawable/ic_add_white_24dp"
+        android:onClick="btnAddCityClick" />
+
+        <!--<fragment-->
+            <!--android:id="@+id/fragment_weather"-->
+            <!--android:name="com.joehaivo.hweather.View.WeatherFragment"-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="match_parent"/>-->
+        <android.support.v4.view.ViewPager
+            android:id="@+id/view_pager_fragment"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginTop="64dp">
+
+        </android.support.v4.view.ViewPager>
+
+
+</android.support.design.widget.CoordinatorLayout>
