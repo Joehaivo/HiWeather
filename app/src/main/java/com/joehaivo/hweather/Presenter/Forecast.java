@@ -41,7 +41,7 @@ public class Forecast {
 
     public void getHefengAQI(String city) {
         final String basicUrl = "https://free-api.heweather.com/v5/aqi?city=";
-        final String keyUrl = "&key=bbeef92e1fe94133b1c298024e7629f5";
+        final String keyUrl = "&key=";
         Request okRequest = new Request.Builder()
                 .url(basicUrl + city + keyUrl)
                 .build();
@@ -66,7 +66,7 @@ public class Forecast {
 
     public void getHefengWeather(String city) {
         Request okRequest = new Request.Builder()
-                .url("https://free-api.heweather.com/s6/weather?key=bbeef92e1fe94133b1c298024e7629f5&location="
+                .url("https://free-api.heweather.com/s6/weather?key=&location="
                         + city)
                 .build();
         client.newCall(okRequest).enqueue(new Callback() {
