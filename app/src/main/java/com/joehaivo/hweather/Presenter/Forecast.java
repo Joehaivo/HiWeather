@@ -4,7 +4,6 @@ import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.util.ArrayMap;
-import android.util.Log;
 
 import com.google.gson.Gson;
 import com.joehaivo.hweather.Model.HefengAQIBean;
@@ -13,7 +12,6 @@ import com.joehaivo.hweather.R;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -24,26 +22,21 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 public class Forecast {
-    private static final int TAG_SUCCESS_FLAG = 0, TAG_DATE = 1, TAG_FORE_CONDITION = 2,
-            TAG_NOW_CONDITION = 3, TAG_HIGHTMP = 4, TAG_LOWTMP = 5, TAG_NOW_TMP = 6,
-            TAG_IMAGE_DRAW = 7, TAG_HOURLYDESCRIPTION = 8, TAG_LIST = 9, TAG_FORE_CODE = 10,
-            TAG_FORE_HOURLY = 11, TAG_SUGGESTION = 12, TAG_HEFENG_AQI = 13, FLAG_FORE_DAILY = 14,
-            FLAG_LOCATION_CITY = 15;
+    private static final int
+            FLAG_NOW_CONDITION = 1,  TAG_NOW_TMP = 2, FLAG_FORE_HOURLY = 3,
+            FLAG_HEFENG_AQI = 4, FLAG_FORE_DAILY = 5, FLAG_LOCATION_CITY = 6,
+            FLAG_LIFE_INDEX = 7;
     private Context context;
     private Handler mHandler;
-    String TAG = "TAGForecast";
     private final OkHttpClient client = new OkHttpClient();
-
     public Forecast(Context context, Handler handler) {
         mHandler = handler;
         this.context = context;
     }
 
-    public void getHefengAQI(String city) {
-        final String basicUrl = "https://free-api.heweather.com/v5/aqi?city=";
-        final String keyUrl = "&key=";
+    public void getHefengAQI(String city){
         Request okRequest = new Request.Builder()
-                .url(basicUrl + city + keyUrl)
+                .url("https://free-api.heweather.com/s6/air/now?key=bbeef92e1fe94133b1c298024e7629f5&location="+city)
                 .build();
         client.newCall(okRequest).enqueue(new Callback() {
             @Override
@@ -54,19 +47,19 @@ public class Forecast {
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 Gson gson = new Gson();
-                HefengAQIBean bean = gson.fromJson(response.body().string(), HefengAQIBean.class);
-                List<HefengAQIBean.HeWeather5Bean> heWeather5BeanList = bean.getHeWeather5();
-                HefengAQIBean.HeWeather5Bean heWeather5Bean = heWeather5BeanList.get(0);
-                HefengAQIBean.HeWeather5Bean.AqiBean aqiBean = heWeather5Bean.getAqi();
-                HefengAQIBean.HeWeather5Bean.AqiBean.CityBean cityBean = aqiBean.getCity();
-                mHandler.obtainMessage(TAG_HEFENG_AQI, cityBean.getAqi() + " " + cityBean.getQlty()).sendToTarget();
+                HefengAQIBean hefengAQIBean = gson.fromJson(response.body().string(), HefengAQIBean.class);
+                List<HefengAQIBean.HeWeather6Bean> heWeather6BeanList = hefengAQIBean.getHeWeather6();
+                HefengAQIBean.HeWeather6Bean heWeather6Bean = heWeather6BeanList.get(0);
+                if (heWeather6Bean.getStatus().equals("ok")){
+                    HefengAQIBean.HeWeather6Bean.AirNowCityBean airNowCityBean = heWeather6Bean.getAir_now_city();
+                    mHandler.obtainMessage(FLAG_HEFENG_AQI, airNowCityBean.getAqi() + " " + airNowCityBean.getQlty()).sendToTarget();                    airNowCityBean.getQlty();
+                }
             }
         });
     }
-
     public void getHefengWeather(String city) {
         Request okRequest = new Request.Builder()
-                .url("https://free-api.heweather.com/s6/weather?key=&location="
+                .url("https://free-api.heweather.com/s6/weather?key=bbeef92e1fe94133b1c298024e7629f5&location="
                         + city)
                 .build();
         client.newCall(okRequest).enqueue(new Callback() {
@@ -81,7 +74,6 @@ public class Forecast {
                 HefengWeatherBean bean = gson.fromJson(response.body().string(), HefengWeatherBean.class);
                 List<HefengWeatherBean.HeWeather6Bean> heWeather6BeanList = bean.getHeWeather6();
                 HefengWeatherBean.HeWeather6Bean heWeather6Bean = heWeather6BeanList.get(0);
-                Log.d(TAG, "onResponse: "+heWeather6Bean.getStatus());
                 if (heWeather6Bean.getStatus().equals("ok")) {
                     //定位地点
                     HefengWeatherBean.HeWeather6Bean.BasicBean basicBean = heWeather6Bean.getBasic();
@@ -90,8 +82,7 @@ public class Forecast {
                     //实时
                     HefengWeatherBean.HeWeather6Bean.NowBean nowBean = heWeather6Bean.getNow();
                     String nowTxt = nowBean.getCond_txt(); //实时天气状况
-                    Log.d(TAG, "onResponse: "+nowTxt);
-                    mHandler.obtainMessage(TAG_NOW_CONDITION, nowTxt).sendToTarget();
+                    mHandler.obtainMessage(FLAG_NOW_CONDITION, nowTxt).sendToTarget();
                     String nowTmp = nowBean.getTmp(); //实时温度
                     mHandler.obtainMessage(TAG_NOW_TMP, nowTmp).sendToTarget();
                     //7天
@@ -143,14 +134,12 @@ public class Forecast {
                         hourlyList.add(hourlyMap);
                         hourCount++;
                     }
-                    mHandler.obtainMessage(TAG_FORE_HOURLY, hourlyList).sendToTarget();
+                    mHandler.obtainMessage(FLAG_FORE_HOURLY, hourlyList).sendToTarget();
                     //生活指数
                     List<HefengWeatherBean.HeWeather6Bean.LifestyleBean> lifestyleBeanList = heWeather6Bean.getLifestyle();
-                    List<Map<String,Object>> lifeList = new ArrayList<>(); //指数数据集合
                     int lifeCount = 0;
-                    List<String> list = new ArrayList<>();
+                    List<String> list = new ArrayList<>(); //指数数据集合
                     while (lifeCount < 8) {
-//                        Map<String,Object> lifeMap = new ArrayMap<>();
                         HefengWeatherBean.HeWeather6Bean.LifestyleBean lifestyleBean = lifestyleBeanList.get(lifeCount);
                         String lifeType = lifestyleBean.getType();   //生活指数类型
                         switch (lifeType){
@@ -165,24 +154,15 @@ public class Forecast {
                                 list.add(lifestyleBean.getBrf());
                                 list.add(lifestyleBean.getTxt());break;
                         }
-//                        Drawable drawable = getLifeTypeDraw(lifeType); //图标
-//                        lifeMap.put("LIFE_DRAW",drawable);
-//                        String lifeBrf = lifestyleBean.getBrf();  //指数概述
-//                        lifeMap.put("LIFE_BRF",liftTypeToChinese(lifeType)+"  "+lifeBrf);
-//                        String lifeTxt = lifestyleBean.getTxt();  //指数描述
-//                        lifeMap.put("LIFE_TXT",lifeTxt);
-//                        lifeList.add(lifeMap);
                         lifeCount++;
                     }
-                    mHandler.obtainMessage(17, list).sendToTarget();
-//                    mHandler.obtainMessage(TAG_SUGGESTION, lifeList).sendToTarget();
-                }
+                    mHandler.obtainMessage(FLAG_LIFE_INDEX, list).sendToTarget();}
             }
         });
     }
 
-    private Drawable getConditionDraw(String conditon) {
-        switch (conditon) {
+    private Drawable getConditionDraw(String condition) {
+        switch (condition) {
             case "晴":
                 return context.getDrawable(R.drawable.sunny);
             case "多云":
@@ -225,31 +205,5 @@ public class Forecast {
                 return context.getDrawable(R.drawable.wind);
         }
         return context.getDrawable(R.drawable.sunny);
-    }
-    private Drawable getLifeTypeDraw(String type){
-        switch (type){
-            case "comf":return context.getDrawable(R.drawable.comfort);
-            case "drsg":return context.getDrawable(R.drawable.clothes);
-            case "flu":return context.getDrawable(R.drawable.risk);
-            case "sport": return context.getDrawable(R.drawable.sport);
-            case "trav": return context.getDrawable(R.drawable.travel);
-            case "uv":return context.getDrawable(R.drawable.uv);
-            case "cw":return context.getDrawable(R.drawable.wash_car);
-            case "air":return context.getDrawable(R.drawable.air);
-        }
-        return context.getDrawable(R.drawable.comfort);
-    }
-    private String liftTypeToChinese(String lifeType){
-        switch (lifeType){
-            case "comf":return "舒适度";
-            case "drsg":return "穿衣指数";
-            case "flu":return "感冒指数";
-            case "sport": return "运动指数";
-            case "trav": return "旅游指数";
-            case "uv":return "紫外线强度";
-            case "cw":return "洗车指数";
-            case "air":return "空气质量";
-        }
-        return "N/A";
     }
 }
