@@ -38,11 +38,6 @@
         android:background="@drawable/ic_add_white_24dp"
         android:onClick="btnAddCityClick" />
 
-        <!--<fragment-->
-            <!--android:id="@+id/fragment_weather"-->
-            <!--android:name="com.joehaivo.hweather.View.WeatherFragment"-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="match_parent"/>-->
         <android.support.v4.view.ViewPager
             android:id="@+id/view_pager_fragment"
             android:layout_width="match_parent"
